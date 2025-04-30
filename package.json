@@ -1,0 +1,28 @@
+{
+  "name": "02-dek-gl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --output-path ./public",
+    "start": "webpack-dev-server --static ./public --output-path ./public --hot"
+  },
+  "keywords": [],
+  "author": "Seba",
+  "license": "ISC",
+  "devDependencies": {
+    "convert-csv-to-json": "^2.50.0",
+    "webpack": "^5.99.7",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
+  },
+  "dependencies": {
+    "@deck.gl/aggregation-layers": "^9.1.11",
+    "@deck.gl/core": "^9.1.11",
+    "@deck.gl/layers": "^9.1.11",
+    "@deck.gl/mapbox": "^9.1.11",
+    "deck.gl": "^9.1.11",
+    "mapbox-gl": "^3.11.1"
+  }
+}
