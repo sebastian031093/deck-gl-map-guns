@@ -4,6 +4,7 @@ const path = require('path'); // Add this line at the top
 
 module.exports = {
   // ... otras configuraciones
+
   mode: 'development', // <-- Move `mode` here (or 'production')
   entry: './src/index.js',
   output: {
