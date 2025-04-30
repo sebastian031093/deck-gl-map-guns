@@ -1,4 +1,5 @@
 import { MapboxOverlay as DeckOverlay } from '@deck.gl/mapbox';
+import { MapView, OrthographicView } from '@deck.gl/core';
 import { ScatterplotLayer, GeoJsonLayer, ArcLayer } from '@deck.gl/layers';
 import { HexagonLayer, HeatmapLayer } from '@deck.gl/aggregation-layers';
 import mapboxgl from 'mapbox-gl';
@@ -103,7 +104,7 @@ map.once('load', () => {
   const deckOverlay = new DeckOverlay({
     // interleaved: true,
     controller: true,
-    views: [
+    /* views: [
       // This view will be synchronized with the base map
       new MapView({ id: 'mapbox' }),
       // This view will not be interactive
@@ -113,11 +114,11 @@ map.once('load', () => {
       const shouldDrawInWidget = layer.id.startsWith('widget');
       if (viewport.id === 'widget') return shouldDrawInWidget;
       return !shouldDrawInWidget;
-    },
+    }, */
     layers: [,
       scatterplot(),
       // heatmap(),
-      hexagon()
+      // hexagon()
     ],
   });
 
