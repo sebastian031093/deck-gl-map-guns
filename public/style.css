@@ -9,3 +9,10 @@ body {
   height: 100vh;
   
 } 
+
+#tooltip {
+  position: absolute;
+  background: white;
+  margin: 10px;
+  padding: 10px;
+}

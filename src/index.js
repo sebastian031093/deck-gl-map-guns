@@ -1,12 +1,29 @@
 import { MapboxOverlay as DeckOverlay } from '@deck.gl/mapbox';
+import { GL } from '@luma.gl/constants';
 import { MapView, OrthographicView } from '@deck.gl/core';
 import { ScatterplotLayer, GeoJsonLayer, ArcLayer } from '@deck.gl/layers';
 import { HexagonLayer, HeatmapLayer } from '@deck.gl/aggregation-layers';
 import mapboxgl from 'mapbox-gl';
+// import data from '../public/gundata.json';
 
+const accessToken = process.env.PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-console.log('Hello from deck gl example. sfhjsgfjsh');
+console.log('Hi from deck gl example. sfhjsgfjsh');
+
+// const preprocessData = (data) => {
+//   return data.filter(d => d.longitude && d.latitude)
+//     .map(d => ({
+//       longitude: d.longitude,
+//       latitude: d.latitude,
+//       n_killed: d.n_killed,
+//       n_injured: d.n_injured,
+//       incident_id: d.incident_id
+//     }));
+// };
+
+// const sourceData = preprocessData(data);
 const sourceData = './gundata.json';
+// console.log(sourceData);
 // source: Natural Earth http://www.naturalearthdata.com/ via geojson.xyz
 const AIR_PORTS =
   'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson';
@@ -29,7 +46,16 @@ const scatterplot = () => new ScatterplotLayer({
     return [d.longitude, d.latitude];
   },
   getFillColor: d => d.n_killed > 0 ? [200, 0, 40, 150] : [255, 140, 0, 100],
-  pickable: true
+  pickable: true,
+  // Performance optimizations:
+  updateTriggers: {
+    getRadius: ['n_killed'],
+    getFillColor: ['n_killed']
+  },
+  _dataDiff: (newData, oldData) => {
+    // Custom diffing if your data updates frequently
+    return newData.length !== oldData.length;
+  }
 });
 
 
@@ -84,14 +110,24 @@ const hexagon = () => new HexagonLayer({
   radius: 1609,
   opacity: 0.6,
   coverage: 0.88,
-  lowerPercentile: 50
+  lowerPercentile: 50,
+
+  // Performance optimizations:// Performance optimizations:
+  fp64: false, // Disable high precision if not needed
+  material: {
+    specularColor: [255, 255, 255],
+    shininess: 30,
+    ambient: 0.3,
+    diffuse: 0.6,
+    specular: 0.2
+  }
 });
 
 const map = new mapboxgl.Map({
   container: 'map', // container ID
+  accessToken: accessToken,
   // style: 'mapbox://styles/mapbox/dark-v10', // Dark theme
-  accessToken: 'pk.eyJ1Ijoic2ViYXMxMzkzbWFuY28iLCJhIjoiY204N3NtYTM2MDhuNzJpcHVncndqaThncyJ9.oRr4Y7PAd_8vLo_qLDFMXA',
-  style: 'mapbox://styles/mapbox/light-v9', //
+  style: 'mapbox://styles/mapbox/dark-v9', //
   center: [-100, 40],
   zoom: 4,
   bearing: 0,
@@ -104,9 +140,32 @@ map.once('load', () => {
   const deckOverlay = new DeckOverlay({
     // interleaved: true,
     controller: true,
-    /* views: [
+    interleaved: true,
+    parameters: {
+      depthTest: true,
+      blend: true,
+      blendFunc: [GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA, GL.ONE, GL.ONE_MINUS_SRC_ALPHA],
+      blendEquation: GL.FUNC_ADD
+    },
+
+    getTooltip: ({ object, x, y }) => {
+      const el = document.getElementById('tooltip');
+      if (object) {
+        const { n_killed, incident_id } = object;
+        el.innerHTML = `<h1>ID ${incident_id}</h1>`
+        el.style.display = 'block';
+        el.style.opacity = 0.9;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+      } else {
+        el.style.opacity = 0.0;
+      }
+    },
+
+
+    views: [
       // This view will be synchronized with the base map
-      new MapView({ id: 'mapbox' }),
+      new MapView({ id: 'ScatterplotLayer' }),
       // This view will not be interactive
       new OrthographicView({ id: 'widget' })
     ],
@@ -114,15 +173,19 @@ map.once('load', () => {
       const shouldDrawInWidget = layer.id.startsWith('widget');
       if (viewport.id === 'widget') return shouldDrawInWidget;
       return !shouldDrawInWidget;
-    }, */
+    },
     layers: [,
+      // hexagon(),
       scatterplot(),
       // heatmap(),
-      // hexagon()
     ],
+    // Performance tuning:
+    _animate: true,
+    _framerate: 30, // Limit frame rate
+    useDevicePixels: false // Can improve performance
   });
 
   map.addControl(deckOverlay);
-  map.addControl(new mapboxgl.NavigationControl());
+  // map.addControl(new mapboxgl.NavigationControl());
 });
 

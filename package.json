@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --output-path ./public",
+    "dev": "node -r dotenv/config webpack serve --env development",
     "start": "webpack-dev-server --static ./public --output-path ./public --hot"
   },
   "keywords": [],
@@ -14,6 +15,10 @@
   "devDependencies": {
     "convert-csv-to-json": "^2.50.0",
     "dotenv": "^16.5.0",
+    "dotenv-webpack": "^8.1.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "util": "^0.12.5",
     "webpack": "^5.99.7",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.1"
@@ -23,6 +28,7 @@
     "@deck.gl/core": "^9.1.11",
     "@deck.gl/layers": "^9.1.11",
     "@deck.gl/mapbox": "^9.1.11",
+    "@luma.gl/constants": "^9.1.9",
     "deck.gl": "^9.1.11",
     "mapbox-gl": "^3.11.1"
   }
