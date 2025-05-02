@@ -2,6 +2,7 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: 'Roboto', sans-serif;
 }
 
 #map {
@@ -12,7 +13,14 @@ body {
 
 #tooltip {
   position: absolute;
-  background: white;
+  background: #20244597;
   margin: 10px;
   padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: white;
+  font-size: 12px;
+  pointer-events: none;
+  max-width: 300px;
+
 }

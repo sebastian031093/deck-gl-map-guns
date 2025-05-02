@@ -4,27 +4,9 @@ import { MapView, OrthographicView } from '@deck.gl/core';
 import { ScatterplotLayer, GeoJsonLayer, ArcLayer } from '@deck.gl/layers';
 import { HexagonLayer, HeatmapLayer } from '@deck.gl/aggregation-layers';
 import mapboxgl from 'mapbox-gl';
-// import data from '../public/gundata.json';
 
 const accessToken = process.env.PUBLIC_MAPBOX_ACCESS_TOKEN;
-
-console.log('Hi from deck gl example. sfhjsgfjsh');
-
-// const preprocessData = (data) => {
-//   return data.filter(d => d.longitude && d.latitude)
-//     .map(d => ({
-//       longitude: d.longitude,
-//       latitude: d.latitude,
-//       n_killed: d.n_killed,
-//       n_injured: d.n_injured,
-//       incident_id: d.incident_id
-//     }));
-// };
-
-// const sourceData = preprocessData(data);
 const sourceData = './gundata.json';
-// console.log(sourceData);
-// source: Natural Earth http://www.naturalearthdata.com/ via geojson.xyz
 const AIR_PORTS =
   'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson';
 
@@ -41,11 +23,16 @@ const scatterplot = () => new ScatterplotLayer({
   getPosition: d => {
     if (!d.longitude || !d.latitude) {
       console.error('Missing position in:', d);
-      return [0, 0]; // fallback position
+      return [0, 0];
     }
     return [d.longitude, d.latitude];
   },
   getFillColor: d => d.n_killed > 0 ? [200, 0, 40, 150] : [255, 140, 0, 100],
+
+  onClick: info => {
+    window.open(`https://www.gunviolencearchive.org/incident/${info.incident_id}`);
+  },
+
   pickable: true,
   // Performance optimizations:
   updateTriggers: {
@@ -53,7 +40,6 @@ const scatterplot = () => new ScatterplotLayer({
     getFillColor: ['n_killed']
   },
   _dataDiff: (newData, oldData) => {
-    // Custom diffing if your data updates frequently
     return newData.length !== oldData.length;
   }
 });
@@ -62,19 +48,15 @@ const scatterplot = () => new ScatterplotLayer({
 const geojsonLayer = () => new GeoJsonLayer({
   id: 'airports',
   data: AIR_PORTS,
-  // Styles
   filled: true,
   pointRadiusMinPixels: 2,
   pointRadiusScale: 2000,
   getPointRadius: f => 11 - f.properties.scalerank,
   getFillColor: [200, 0, 80, 180],
-  // Interactive props
   pickable: true,
   autoHighlight: true,
   onClick: info =>
-    // eslint-disable-next-line
     info.object && alert(`${info.object.properties.name} (${info.object.properties.abbrev})`)
-  // beforeId: 'waterway-label' // In interleaved mode render the layer under map labels
 })
 
 
@@ -82,7 +64,6 @@ const arcLayer = () => new ArcLayer({
   id: 'arcs',
   data: AIR_PORTS,
   dataTransform: d => d.features.filter(f => f.properties.scalerank < 4),
-  // Styles
   getSourcePosition: f => [-0.4531566, 51.4709959], // London
   getTargetPosition: f => f.geometry.coordinates,
   getSourceColor: [0, 128, 200],
@@ -101,7 +82,7 @@ const heatmap = () => new HeatmapLayer({
 
 
 const hexagon = () => new HexagonLayer({
-  id: 'widget-HexagonLayer',
+  id: 'HexagonLayer',
   data: sourceData,
   getPosition: d => [d.longitude, d.latitude],
   getElevationWeight: d => (d.n_killed * 2) + d.n_injured,
@@ -112,8 +93,7 @@ const hexagon = () => new HexagonLayer({
   coverage: 0.88,
   lowerPercentile: 50,
 
-  // Performance optimizations:// Performance optimizations:
-  fp64: false, // Disable high precision if not needed
+  fp64: false,
   material: {
     specularColor: [255, 255, 255],
     shininess: 30,
@@ -127,7 +107,7 @@ const map = new mapboxgl.Map({
   container: 'map', // container ID
   accessToken: accessToken,
   // style: 'mapbox://styles/mapbox/dark-v10', // Dark theme
-  style: 'mapbox://styles/mapbox/dark-v9', //
+  style: 'mapbox://styles/mapbox/dark-v10', //
   center: [-100, 40],
   zoom: 4,
   bearing: 0,
@@ -136,9 +116,7 @@ const map = new mapboxgl.Map({
 
 map.once('load', () => {
   console.log('initMap');
-  // Initialize deck.gl overlay and add it to Mapbox
   const deckOverlay = new DeckOverlay({
-    // interleaved: true,
     controller: true,
     interleaved: true,
     parameters: {
@@ -151,8 +129,8 @@ map.once('load', () => {
     getTooltip: ({ object, x, y }) => {
       const el = document.getElementById('tooltip');
       if (object) {
-        const { n_killed, incident_id } = object;
-        el.innerHTML = `<h1>ID ${incident_id}</h1>`
+        const { n_killed, incident_id, n_injured, notes } = object;
+        el.innerHTML = `<h1>ID ${incident_id}</h1> <p>Dead: ${n_killed}</p> <p>Injured: ${n_injured}</p> <p>Notes: ${notes}</p>`
         el.style.display = 'block';
         el.style.opacity = 0.9;
         el.style.left = x + 'px';
@@ -164,9 +142,8 @@ map.once('load', () => {
 
 
     views: [
-      // This view will be synchronized with the base map
+
       new MapView({ id: 'ScatterplotLayer' }),
-      // This view will not be interactive
       new OrthographicView({ id: 'widget' })
     ],
     layerFilter: ({ layer, viewport }) => {
@@ -175,17 +152,25 @@ map.once('load', () => {
       return !shouldDrawInWidget;
     },
     layers: [,
-      // hexagon(),
+
       scatterplot(),
       // heatmap(),
+      new ScatterplotLayer({
+        id: 'widget-scatterplot',
+        data: [
+          { position: [0, 0], size: 2 }
+        ],
+        getPosition: d => d.position,
+        getRadius: d => d.size,
+        getFillColor: [255, 0, 0]
+      }),
+      // hexagon(),
     ],
-    // Performance tuning:
     _animate: true,
-    _framerate: 30, // Limit frame rate
-    useDevicePixels: false // Can improve performance
+    _framerate: 30,
+    useDevicePixels: false
   });
 
   map.addControl(deckOverlay);
-  // map.addControl(new mapboxgl.NavigationControl());
 });
 

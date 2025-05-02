@@ -3,6 +3,9 @@ const path = require('path');
 const webpack = require('webpack');
 
 
+
+// console.log('process.env', process.env);
+
 module.exports = {
 
   mode: 'development',
@@ -17,9 +20,12 @@ module.exports = {
     new Dotenv({
       path: path.resolve(__dirname, '.env'), // Ruta absoluta
       systemvars: true,
-      allowEmptyValues: true,
-      expand: true,
+      expand: true
     }), // <-- Add this to load .env files
+    // DefinePlugin solo para NODE_ENV
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+    })
   ],
 
   module: {
